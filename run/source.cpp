@@ -1,5 +1,5 @@
 import std; 
-import result;
+import fox.vulkan;
 
 auto main() -> int
 {
@@ -8,5 +8,4 @@ auto main() -> int
     //auto context = vk::context{};
     
     auto a = vk::application{};
-    
 }
