@@ -44,6 +44,31 @@ namespace fox
 }
 export namespace vk
 {
+    struct my_vertex 
+    {
+        glm::vec2 position;
+        glm::vec3 color;
+
+        static auto vertex_input_binding_description  () -> vk::VertexInputBindingDescription
+        {
+            return { std::uint32_t{ 0u }, sizeof(vk::my_vertex), vk::VertexInputRate::eVertex };
+        }
+        static auto vertex_input_attribute_description() -> std::array<vk::VertexInputAttributeDescription, 2u>
+        {
+            return
+            {
+                vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat   , offsetof(vk::my_vertex, position)), 
+                vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(vk::my_vertex, color   )), 
+            };
+        };
+    };
+    const auto my_vertices = std::vector<vk::my_vertex>
+    {
+        vk::my_vertex{ {  0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } }, 
+        vk::my_vertex{ {  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f } }, 
+        vk::my_vertex{ { -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f } }, 
+    };
+
     constexpr auto is_debug_build           = _DEBUG;
     constexpr auto maximum_frames_in_flight = std::uint32_t{ 2u };
 
@@ -63,6 +88,7 @@ export namespace vk
             create_image_views();
             create_graphics_pipeline();
             create_command_pool();
+            create_vertex_buffer();
             create_command_buffers();
             create_synchronization_objects();
 
@@ -380,7 +406,14 @@ export namespace vk
                 vk::PipelineInputAssemblyStateCreateFlags{}, 
                 vk::PrimitiveTopology::eTriangleList       , 
             };
-            const auto vertex_input_state_create_info        = vk::PipelineVertexInputStateCreateInfo{};
+            
+            const auto vertex_input_binding_description      = vk::my_vertex::vertex_input_binding_description  ();
+            const auto vertex_input_attribute_description    = vk::my_vertex::vertex_input_attribute_description();
+            const auto vertex_input_state_create_info        = vk::PipelineVertexInputStateCreateInfo{
+                vk::PipelineVertexInputStateCreateFlags{}                            , 
+                std::uint32_t{ 1u }                                                  , &vertex_input_binding_description        , 
+                static_cast<std::uint32_t>(vertex_input_attribute_description.size()), vertex_input_attribute_description.data(), 
+            };
             const auto viewport_state_create_info            = vk::PipelineViewportStateCreateInfo{ 
                 vk::PipelineViewportStateCreateFlags{}, 
                 std::uint32_t{ 1u }, nullptr          , 
@@ -447,6 +480,44 @@ export namespace vk
             };
 
             command_pool_ = std::make_unique<vk::raii::CommandPool>(*logical_device_, command_pool_create_info);
+        }
+        void create_vertex_buffer()
+        {
+                  auto find_memory_type     = [&](std::uint32_t type_filter, vk::MemoryPropertyFlags property_flags) -> std::optional<std::uint32_t>
+                {
+                    const auto memory_properties = physical_device_->getMemoryProperties();
+                    for (auto index : std::views::iota(0u, memory_properties.memoryTypeCount))
+                    {
+                        if ((type_filter & (1 << index)) && (memory_properties.memoryTypes[index].propertyFlags & property_flags) == property_flags) return index;
+                    };
+
+                    return std::nullopt;
+                };
+
+            const auto buffer_create_info   = vk::BufferCreateInfo{
+                vk::BufferCreateFlags{}                    , 
+                sizeof(my_vertices[0]) * my_vertices.size(), 
+                vk::BufferUsageFlagBits::eVertexBuffer     , 
+                vk::SharingMode        ::eExclusive        , 
+            };
+            
+            vertex_buffer_                  = std::make_unique<vk::raii::Buffer>(*logical_device_, buffer_create_info);
+            
+            const auto memory_requirements  = vertex_buffer_->getMemoryRequirements();
+            const auto memory_type          = find_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+            if (!memory_type.has_value()) throw std::runtime_error{ "Valid memory type was not found!" };
+            
+            const auto memory_allocate_info = vk::MemoryAllocateInfo{
+                memory_requirements.size, 
+                memory_type.value()     , 
+            };
+
+            vertex_buffer_memory_           = std::make_unique<vk::raii::DeviceMemory>(*logical_device_, memory_allocate_info);
+            vertex_buffer_->bindMemory(*vertex_buffer_memory_, vk::DeviceSize{});
+
+            void* data                      = vertex_buffer_memory_->mapMemory(0, buffer_create_info.size);
+            memcpy(data, my_vertices.data(), buffer_create_info.size);
+            vertex_buffer_memory_->unmapMemory();
         }
         void create_command_buffers()
         {
@@ -552,12 +623,13 @@ export namespace vk
                         std::uint32_t{ 1u }                                   , &rendering_attachment_info, 
                     };
                     
-                    command_buffers_.at(current_frame).beginRendering(rendering_info);
-                    command_buffers_.at(current_frame).bindPipeline  (vk::PipelineBindPoint::eGraphics, *pipeline_);
-                    command_buffers_.at(current_frame).setViewport   (0, vk::Viewport(0.0f, 0.0f, static_cast<float>(swap_chain_extent_.width), static_cast<float>(swap_chain_extent_.height), 0.0f, 1.0f));
-                    command_buffers_.at(current_frame).setScissor    (0, vk::Rect2D(vk::Offset2D(0, 0), swap_chain_extent_));
-                    command_buffers_.at(current_frame).draw          (3, 1, 0, 0);
-                    command_buffers_.at(current_frame).endRendering  ();
+                    command_buffers_.at(current_frame).beginRendering   (rendering_info);
+                    command_buffers_.at(current_frame).bindPipeline     (vk::PipelineBindPoint::eGraphics, *pipeline_);
+                    command_buffers_.at(current_frame).bindVertexBuffers(std::uint32_t{ 0u }, vertex_buffer_->operator*(), { 0u });
+                    command_buffers_.at(current_frame).setViewport      (0, vk::Viewport(0.0f, 0.0f, static_cast<float>(swap_chain_extent_.width), static_cast<float>(swap_chain_extent_.height), 0.0f, 1.0f));
+                    command_buffers_.at(current_frame).setScissor       (0, vk::Rect2D(vk::Offset2D(0, 0), swap_chain_extent_));
+                    command_buffers_.at(current_frame).draw             (3, 1, 0, 0);
+                    command_buffers_.at(current_frame).endRendering     ();
 
                     transition_image_layout(
                         image_index                                       , current_frame                            , 
@@ -639,6 +711,8 @@ export namespace vk
         std::unique_ptr<vk::raii::PipelineLayout        > pipeline_layout_;
         std::unique_ptr<vk::raii::Pipeline              > pipeline_;
         std::unique_ptr<vk::raii::CommandPool           > command_pool_;
+        std::unique_ptr<vk::raii::Buffer                > vertex_buffer_;
+        std::unique_ptr<vk::raii::DeviceMemory          > vertex_buffer_memory_;
 
         vk::Format                                        swap_chain_image_format_;
         vk::Extent2D                                      swap_chain_extent_;
