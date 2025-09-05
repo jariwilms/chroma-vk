@@ -94,7 +94,7 @@ group "Application"
 			"chroma-vk", 
 		}
 
-group "Dependencies"
+group "Vendor"
 	include "vendor/glad"
 	include "vendor/glfw"
 	include "vendor/glm"
