@@ -58,10 +58,7 @@ export namespace vx
             | std::views::transform([](const auto& string) { return string.c_str(); })
             | std::ranges::to<std::vector>();
     }
-    constexpr auto make_api_version(vx::uint32_t variant, vx::uint32_t major, vx::uint32_t minor, vx::uint32_t patch) -> vx::uint32_t
-    {
-        return (variant << 29u | major << 22u | minor << 12u | patch);
-    }
+
     
 
 
@@ -76,7 +73,6 @@ export namespace vx
     //    array() = default;
     //    array(vx::pointer_t<T> pointer)
     //        : pointer_{ pointer } {}
-
     //    auto size() const -> vx::uint32_t
     //    {
     //        return S;
@@ -85,7 +81,6 @@ export namespace vx
     //    {
     //        return self.pointer_;
     //    }
-
     //private:
     //    T pointer_[S];
     //};
@@ -138,13 +133,7 @@ export namespace vx
 
 
 
-    enum class api_version_e : vx::uint32_t
-    {
-        _1_1 = vx::make_api_version(0u, 1u, 1u, 0u), 
-        _1_2 = vx::make_api_version(0u, 1u, 2u, 0u), 
-        _1_3 = vx::make_api_version(0u, 1u, 3u, 0u), 
-        _1_4 = vx::make_api_version(0u, 1u, 4u, 0u), 
-    };
+
 
     struct extension_properties
     {
@@ -158,7 +147,6 @@ export namespace vx
         vx::uint32_t    implementation_version;
         vx::string_view description;
     };
-    
     struct extension_properties2
     {
         using native_t = VkExtensionProperties;
@@ -206,21 +194,60 @@ export namespace vx
 
 
 
+    //template<auto Fn, typename T, typename... Args>
+    //auto query_and_retrieve(Args&&... args)
+    //{
+    //    auto result = vx::result_e {};
+    //    auto count  = vx::uint32_t {};
+
+    //    result = std::bit_cast<vx::result_e>(Fn(args..., &count, nullptr));
+    //    if (result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data count!" };
+
+    //    auto data   = std::vector<T>(count);
+
+    //    result = std::bit_cast<vx::result_e>(Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data())));
+    //    if (result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data!" };
+
+    //    return data;
+    //}
+    //template<auto Fn, typename T, typename... Args>
+    //auto query_and_retrieve_nr(Args&&... args)
+    //{
+    //    auto count  = vx::uint32_t {};
+
+    //    Fn(args..., &count, nullptr);
+
+    //    auto data   = std::vector<T>(count);
+
+    //    Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data()));
+
+    //    return data;
+    //}
     template<auto Fn, typename T, typename... Args>
     auto query_and_retrieve(Args&&... args)
     {
-        auto result = vx::result_e {};
-        auto count  = vx::uint32_t {};
+        if constexpr (std::is_same_v<std::invoke_result_t<decltype(Fn), Args..., vx::uint32_t*, typename T::native_t*>, VkResult>)
+        {
+            auto count        = vx::uint32_t {};
+            auto count_result = std::bit_cast<vx::result_e>(Fn(args..., &count, nullptr));
+            if (count_result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data count!" };
 
-        result = std::bit_cast<vx::result_e>(Fn(args..., &count, nullptr));
-        if (result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data count!" };
+            auto data         = std::vector<T>(count);
 
-        auto data   = std::vector<T>(count);
+            auto data_result  = std::bit_cast<vx::result_e>(Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data())));
+            if (data_result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data!" };
 
-        result = std::bit_cast<vx::result_e>(Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data())));
-        if (result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data!" };
+            return data;
+        }
+        else
+        {
+            auto count = vx::uint32_t{};
+            Fn(args..., &count, nullptr);
+            auto data  = std::vector<T>(count);
+            Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data()));
 
-        return data;
+            return data;
+        }
     }
 
     auto enumerate_instance_layer_properties() -> std::vector<vx::layer_properties2>

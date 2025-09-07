@@ -2,6 +2,7 @@ export module vx.types;
 
 import std;
 import glm;
+import <vulkan/vulkan.h>;
 
 export namespace vx
 {
@@ -36,6 +37,10 @@ export namespace vx
     template<typename T> using pointer_t   = T*;
     template<typename T> using reference_t = T&;
                          using next_t      = vx::pointer_t<const vx::void_t>;
+
+    using debug_utils_messenger_callback = PFN_vkDebugUtilsMessengerCallbackEXT;
+    
+    
 
 
 
