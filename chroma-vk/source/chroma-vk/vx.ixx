@@ -1,6 +1,7 @@
 export module vx;
 export import vx.flags;
 export import vx.types;
+export import vx.structures;
 
 import std;
 import glm;
@@ -47,123 +48,22 @@ export namespace vx
         VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME     , 
     };
 
-    constexpr auto maximum_extension_name_size         = VK_MAX_EXTENSION_NAME_SIZE;
-    constexpr auto maximum_description_size            = VK_MAX_DESCRIPTION_SIZE;
 
 
 
-              auto to_c_strings    (std::span<const std::string> span) -> std::vector<const vx::char_t*>
+    template<typename T>
+    auto ternary(vx::bool_t result, T true_result, T false_result) -> T
+    {
+        if   (result) return true_result ;
+        else          return false_result;
+    }
+    auto to_c_strings(std::span<const std::string> span) -> std::vector<const vx::char_t*>
     {
         return span
-            | std::views::transform([](const auto& string) { return string.c_str(); })
+            | std::views::transform([](const std::string& string) { return string.c_str(); })
             | std::ranges::to<std::vector>();
     }
-
     
-
-
-    
-
-    template<typename T, vx::uint32_t S>
-    using array = std::array<T, S>;
-    //template<typename T, vx::uint32_t S>
-    //class array
-    //{
-    //public:
-    //    array() = default;
-    //    array(vx::pointer_t<T> pointer)
-    //        : pointer_{ pointer } {}
-    //    auto size() const -> vx::uint32_t
-    //    {
-    //        return S;
-    //    }
-    //    auto data(this auto&& self) -> auto&&
-    //    {
-    //        return self.pointer_;
-    //    }
-    //private:
-    //    T pointer_[S];
-    //};
-    template<typename T>
-    class span
-    {
-    public:
-        span() = default;
-        span(vx::pointer_t<T> pointer, vx::uint64_t size)
-            : pointer_{ pointer }, size_{ static_cast<vx::uint32_t>(size) } {}
-        template<std::ranges::contiguous_range R>
-        span(std::from_range_t, R&& range)
-            : pointer_(std::ranges::data(range)), size_(static_cast<vx::uint32_t>(std::ranges::size(range))) {}
-
-        auto size() const -> vx::uint32_t
-        {
-            return size_;
-        }
-        auto data(this auto&& self) -> auto&&
-        {
-            return self.pointer_;
-        }
-
-    private:
-        vx::uint32_t     size_   ;
-        vx::pointer_t<T> pointer_;
-    };
-    using string_view = vx::pointer_t<const vx::char_t>;
-    //class string_view
-    //{
-    //public:
-    //    string_view() = default;
-    //    string_view(const std::string&              value)
-    //        : pointer_{ value.c_str() } {}
-    //    string_view(vx::pointer_t<const vx::char_t> value)
-    //        : pointer_{ value } {}
-    //    
-    //    auto data(this auto&& self) -> auto&&
-    //    {
-    //        return self.pointer_;
-    //    }
-    //    
-    //    constexpr operator vx::pointer_t<const vx::char_t>() const
-    //    {
-    //        return pointer_;
-    //    }
-    //private:
-    //    vx::pointer_t<const vx::char_t> pointer_ = nullptr;
-    //};
-
-
-
-
-
-    struct extension_properties
-    {
-        vx::string_view name;
-        vx::uint32_t    specification_version;
-    };
-    struct layer_properties
-    {
-        vx::string_view name;
-        vx::uint32_t    specification_version;
-        vx::uint32_t    implementation_version;
-        vx::string_view description;
-    };
-    struct extension_properties2
-    {
-        using native_t = VkExtensionProperties;
-
-        vx::array<vx::char_t, vx::maximum_extension_name_size> name;
-        vx::uint32_t                                           specification_version;
-    };
-    struct layer_properties2
-    {
-        using native_t = VkLayerProperties;
-
-        vx::array<vx::char_t, vx::maximum_extension_name_size> name;
-        vx::uint32_t                                           specification_version;
-        vx::uint32_t                                           implementation_version;
-        vx::array<vx::char_t, vx::maximum_description_size>    description;
-    };
-
     
 
     auto get_required_layers_or_smth    () -> std::vector<vx::string_view>
@@ -176,14 +76,14 @@ export namespace vx
     auto get_required_extensions_or_smth() -> std::vector<vx::string_view>
     {
         auto glfw_extension_count              = vx::uint32_t{ 0u };
-        auto required_glfw_instance_extensions = std::span  <const vx::char_t*>{ glfwGetRequiredInstanceExtensions(&glfw_extension_count), glfw_extension_count };
-        auto extensions                        = std::vector<vx::string_view  >{ std::from_range, required_glfw_instance_extensions };
+        auto required_glfw_instance_extensions = std::span  <const vx::string_view>{ ::glfwGetRequiredInstanceExtensions(&glfw_extension_count), glfw_extension_count };
+        auto extensions                        = std::vector<      vx::string_view>{ std::from_range, required_glfw_instance_extensions };
         if constexpr (is_debug_build) extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
         return extensions;
     }
 
-
+    
 
     auto debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT vk_message_severity, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* vk_callback_data, void*) -> vx::uint32_t
     {
@@ -194,37 +94,8 @@ export namespace vx
 
 
 
-    //template<auto Fn, typename T, typename... Args>
-    //auto query_and_retrieve(Args&&... args)
-    //{
-    //    auto result = vx::result_e {};
-    //    auto count  = vx::uint32_t {};
-
-    //    result = std::bit_cast<vx::result_e>(Fn(args..., &count, nullptr));
-    //    if (result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data count!" };
-
-    //    auto data   = std::vector<T>(count);
-
-    //    result = std::bit_cast<vx::result_e>(Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data())));
-    //    if (result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data!" };
-
-    //    return data;
-    //}
-    //template<auto Fn, typename T, typename... Args>
-    //auto query_and_retrieve_nr(Args&&... args)
-    //{
-    //    auto count  = vx::uint32_t {};
-
-    //    Fn(args..., &count, nullptr);
-
-    //    auto data   = std::vector<T>(count);
-
-    //    Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data()));
-
-    //    return data;
-    //}
     template<auto Fn, typename T, typename... Args>
-    auto query_and_retrieve(Args&&... args)
+    auto query_and_retrieve(Args&&... args) -> std::vector<T>
     {
         if constexpr (std::is_same_v<std::invoke_result_t<decltype(Fn), Args..., vx::uint32_t*, typename T::native_t*>, VkResult>)
         {
@@ -233,7 +104,6 @@ export namespace vx
             if (count_result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data count!" };
 
             auto data         = std::vector<T>(count);
-
             auto data_result  = std::bit_cast<vx::result_e>(Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data())));
             if (data_result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data!" };
 
@@ -250,12 +120,12 @@ export namespace vx
         }
     }
 
-    auto enumerate_instance_layer_properties() -> std::vector<vx::layer_properties2>
+    auto enumerate_instance_layer_properties() -> std::vector<vx::layer_properties>
     {
-        return vx::query_and_retrieve<vkEnumerateInstanceLayerProperties, vx::layer_properties2>();
+        return vx::query_and_retrieve<vkEnumerateInstanceLayerProperties, vx::layer_properties>();
     }
-    auto enumerate_instance_extension_properties(vx::string_view layer_name = {}) -> std::vector<vx::extension_properties2>
+    auto enumerate_instance_extension_properties(vx::string_view layer_name = {}) -> std::vector<vx::extension_properties>
     {
-        return vx::query_and_retrieve<vkEnumerateInstanceExtensionProperties, vx::extension_properties2>(layer_name);
+        return vx::query_and_retrieve<vkEnumerateInstanceExtensionProperties, vx::extension_properties>(layer_name);
     }
 }

@@ -37,7 +37,7 @@ export namespace vx
         vx::debug_utils_messenger_create_flags_e flags          = {};
         vx::debug_utils_message_severity_e       severity       = {};
         vx::debug_utils_message_type_e           type           = {};
-        vx::debug_utils_messenger_callback       callback       = {};
+        vx::debug_utils_messenger_callback_t     callback       = {};
         vx::next_t                               user_data      = {};
     };
     struct instance_create_info
@@ -77,7 +77,7 @@ export namespace vx
             
             if (!std::ranges::all_of(required_layers, [&](const vx::string_view name) -> vx::bool_t
                 {
-                    return std::ranges::any_of(instance_layer_properties, [&](const vx::layer_properties2& layer_properties) -> vx::bool_t
+                    return std::ranges::any_of(instance_layer_properties, [&](const vx::layer_properties& layer_properties) -> vx::bool_t
                         {
                             return std::strcmp(layer_properties.name.data(), name) != vx::int32_t{ 0u };
                         });
@@ -102,20 +102,20 @@ export namespace vx
                 .extension_names  = vx::span<const vx::string_view>{ std::from_range, required_extensions }, 
             };
             
-            vkCreateInstance(instance_create_info, nullptr, &instance_);
-            const auto vkCreateDebugUtilsMessengerEXT = std::bit_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance_, "vkCreateDebugUtilsMessengerEXT"));
+            ::vkCreateInstance(instance_create_info, nullptr, &instance_);
+            const auto vkCreateDebugUtilsMessengerEXT = std::bit_cast<PFN_vkCreateDebugUtilsMessengerEXT>(::vkGetInstanceProcAddr(instance_, "vkCreateDebugUtilsMessengerEXT"));
             vkCreateDebugUtilsMessengerEXT(instance_, debug_messenger_create_info, nullptr, &debug_messenger_);
         }
 
-        operator       VkInstance              () 
+        operator       VkInstance              &() 
         {
             return instance_;
         }
-        operator const VkInstance              () const
+        operator const VkInstance              &() const
         {
             return instance_;
         }
-        operator const VkDebugUtilsMessengerEXT() const
+        operator const VkDebugUtilsMessengerEXT&() const
         {
             return debug_messenger_;
         }

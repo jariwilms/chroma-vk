@@ -1,0 +1,338 @@
+export module vx.structures;
+
+import std;
+import <vulkan/vulkan.h>;
+import vx.types;
+import vx.flags;
+
+export namespace vx
+{
+    constexpr auto maximum_extension_name_size = vx::uint32_t{ VK_MAX_EXTENSION_NAME_SIZE };
+    constexpr auto maximum_description_size    = vx::uint32_t{ VK_MAX_DESCRIPTION_SIZE    };
+
+
+
+    struct layer_properties : vx::enable_conversion<vx::layer_properties, VkLayerProperties>
+    {
+        vx::array<vx::char_t, vx::maximum_extension_name_size> name;
+        vx::uint32_t                                           specification_version;
+        vx::uint32_t                                           implementation_version;
+        vx::array<vx::char_t, vx::maximum_description_size>    description;
+    };
+    struct memory_type : vx::enable_conversion<vx::memory_type, VkMemoryType>
+    {
+        vx::memory_property_flags_e flags;
+        vx::uint32_t                heap_index;
+    };
+    struct memory_heap : vx::enable_conversion<vx::memory_heap, VkMemoryHeap>
+    {
+        vx::device_size         size;
+        vx::memory_heap_flags_e flags;
+    };
+    struct extent_2d : vx::enable_conversion<vx::extent_2d, VkExtent2D>
+    {
+        vx::uint32_t width;
+        vx::uint32_t height;
+    };
+    struct extent_3d : vx::enable_conversion<vx::extent_3d, VkExtent3D>
+    {
+        vx::uint32_t width;
+        vx::uint32_t height;
+        vx::uint32_t depth;
+    };
+    struct queue_family_properties : vx::enable_conversion<vx::queue_family_properties, VkQueueFamilyProperties2>
+    {
+        vx::structure_type_e structure_type                     = vx::structure_type_e::queue_family_properties;
+        vx::next_t           next                               = {};
+        vx::queue_flags_e    queue_flags                        = {};
+        vx::uint32_t         queue_count                        = {};
+        vx::uint32_t         timestamp_valid_bits               = {};
+        vx::extent_3d        minimum_image_transfer_granularity = {};
+    };
+    struct extension_properties : vx::enable_conversion<vx::extension_properties, VkExtensionProperties>
+    {
+        vx::array<vx::char_t, vx::maximum_extension_name_size> name                  = {};
+        vx::uint32_t                                           specification_version = {};
+    };
+    struct physical_device_limits : vx::enable_conversion<vx::physical_device_limits, VkPhysicalDeviceLimits>
+    {
+        vx::uint32_t                 max_image_dimension_1d                                = {};
+        vx::uint32_t                 max_image_dimension_2d                                = {};
+        vx::uint32_t                 max_image_dimension_3d                                = {};
+        vx::uint32_t                 max_image_dimension_cube                              = {};
+        vx::uint32_t                 max_image_array_layers                                = {};
+        vx::uint32_t                 max_texel_buffer_elements                             = {};
+        vx::uint32_t                 max_uniform_buffer_range                              = {};
+        vx::uint32_t                 max_storage_buffer_range                              = {};
+        vx::uint32_t                 max_push_constants_size                               = {};
+        vx::uint32_t                 max_memory_allocation_count                           = {};
+        vx::uint32_t                 max_sampler_allocation_count                          = {};
+        vx::device_size              buffer_image_granularity                              = {};
+        vx::device_size              sparse_address_space_size                             = {};
+        vx::uint32_t                 max_bound_descriptor_sets                             = {};
+        vx::uint32_t                 max_per_stage_descriptor_samplers                     = {};
+        vx::uint32_t                 max_per_stage_descriptor_uniform_buffers              = {};
+        vx::uint32_t                 max_per_stage_descriptor_storage_buffers              = {};
+        vx::uint32_t                 max_per_stage_descriptor_sampled_images               = {};
+        vx::uint32_t                 max_per_stage_descriptor_storage_images               = {};
+        vx::uint32_t                 max_per_stage_descriptor_input_attachments            = {};
+        vx::uint32_t                 max_per_stage_resources                               = {};
+        vx::uint32_t                 max_descriptor_set_samplers                           = {};
+        vx::uint32_t                 max_descriptor_set_uniform_buffers                    = {};
+        vx::uint32_t                 max_descriptor_set_uniform_buffers_dynamic            = {};
+        vx::uint32_t                 max_descriptor_set_storage_buffers                    = {};
+        vx::uint32_t                 max_descriptor_set_storage_buffers_dynamic            = {};
+        vx::uint32_t                 max_descriptor_set_sampled_images                     = {};
+        vx::uint32_t                 max_descriptor_set_storage_images                     = {};
+        vx::uint32_t                 max_descriptor_set_input_attachments                  = {};
+        vx::uint32_t                 max_vertex_input_attributes                           = {};
+        vx::uint32_t                 max_vertex_input_bindings                             = {};
+        vx::uint32_t                 max_vertex_input_attribute_offset                     = {};
+        vx::uint32_t                 max_vertex_input_binding_stride                       = {};
+        vx::uint32_t                 max_vertex_output_components                          = {};
+        vx::uint32_t                 max_tessellation_generation_level                     = {};
+        vx::uint32_t                 max_tessellation_patch_size                           = {};
+        vx::uint32_t                 max_tessellation_control_per_vertex_input_components  = {};
+        vx::uint32_t                 max_tessellation_control_per_vertex_output_components = {};
+        vx::uint32_t                 max_tessellation_control_per_patch_output_components  = {};
+        vx::uint32_t                 max_tessellation_control_total_output_components      = {};
+        vx::uint32_t                 max_tessellation_evaluation_input_components          = {};
+        vx::uint32_t                 max_tessellation_evaluation_output_components         = {};
+        vx::uint32_t                 max_geometry_shader_invocations                       = {};
+        vx::uint32_t                 max_geometry_input_components                         = {};
+        vx::uint32_t                 max_geometry_output_components                        = {};
+        vx::uint32_t                 max_geometry_output_vertices                          = {};
+        vx::uint32_t                 max_geometry_total_output_components                  = {};
+        vx::uint32_t                 max_fragment_input_components                         = {};
+        vx::uint32_t                 max_fragment_output_attachments                       = {};
+        vx::uint32_t                 max_fragment_dual_src_attachments                     = {};
+        vx::uint32_t                 max_fragment_combined_output_resources                = {};
+        vx::uint32_t                 max_compute_shared_memory_size                        = {};
+        vx::array<vx::uint32_t, 3u>  max_compute_work_group_count                          = {};
+        vx::uint32_t                 max_compute_work_group_invocations                    = {};
+        vx::array<vx::uint32_t, 3u>  max_compute_work_group_size                           = {};
+        vx::uint32_t                 sub_pixel_precision_bits                              = {};
+        vx::uint32_t                 sub_texel_precision_bits                              = {};
+        vx::uint32_t                 mipmap_precision_bits                                 = {};
+        vx::uint32_t                 max_draw_indexed_index_value                          = {};
+        vx::uint32_t                 max_draw_indirect_count                               = {};
+        vx::float32_t                max_sampler_lod_bias                                  = {};
+        vx::float32_t                max_sampler_anisotropy                                = {};
+        vx::uint32_t                 max_viewports                                         = {};
+        vx::array<vx::uint32_t, 2u>  max_viewport_dimensions                               = {};
+        vx::array<vx::float32_t, 2u> viewport_bounds_range                                 = {};
+        vx::uint32_t                 viewport_sub_pixel_bits                               = {};
+        vx::size_t                   min_memory_map_alignment                              = {};
+        vx::device_size              min_texel_buffer_offset_alignment                     = {};
+        vx::device_size              min_uniform_buffer_offset_alignment                   = {};
+        vx::device_size              min_storage_buffer_offset_alignment                   = {};
+        vx::int32_t                  min_texel_offset                                      = {};
+        vx::uint32_t                 max_texel_offset                                      = {};
+        vx::int32_t                  min_texel_gather_offset                               = {};
+        vx::uint32_t                 max_texel_gather_offset                               = {};
+        vx::float32_t                min_interpolation_offset                              = {};
+        vx::float32_t                max_interpolation_offset                              = {};
+        vx::uint32_t                 sub_pixel_interpolation_offset_bits                   = {};
+        vx::uint32_t                 max_framebuffer_width                                 = {};
+        vx::uint32_t                 max_framebuffer_height                                = {};
+        vx::uint32_t                 max_framebuffer_layers                                = {};
+        vx::sample_count_e           framebuffer_color_sample_counts                       = {};
+        vx::sample_count_e           framebuffer_depth_sample_counts                       = {};
+        vx::sample_count_e           framebuffer_stencil_sample_counts                     = {};
+        vx::sample_count_e           framebuffer_no_attachments_sample_counts              = {};
+        vx::uint32_t                 max_color_attachments                                 = {};
+        vx::sample_count_e           sampled_image_color_sample_counts                     = {};
+        vx::sample_count_e           sampled_image_integer_sample_counts                   = {};
+        vx::sample_count_e           sampled_image_depth_sample_counts                     = {};
+        vx::sample_count_e           sampled_image_stencil_sample_counts                   = {};
+        vx::sample_count_e           storage_image_sample_counts                           = {};
+        vx::uint32_t                 max_sample_mask_words                                 = {};
+        vx::bool32_t                 timestamp_compute_and_graphics                        = {};
+        vx::float32_t                timestamp_period                                      = {};
+        vx::uint32_t                 max_clip_distances                                    = {};
+        vx::uint32_t                 max_cull_distances                                    = {};
+        vx::uint32_t                 max_combined_clip_and_cull_distances                  = {};
+        vx::uint32_t                 discrete_queue_priorities                             = {};
+        vx::array<vx::float32_t, 2u> point_size_range                                      = {};
+        vx::array<vx::float32_t, 2u> line_width_range                                      = {};
+        vx::float32_t                point_size_granularity                                = {};
+        vx::float32_t                line_width_granularity                                = {};
+        vx::bool32_t                 strict_lines                                          = {};
+        vx::bool32_t                 standard_sample_locations                             = {};
+        vx::device_size              optimal_buffer_copy_offset_alignment                  = {};
+        vx::device_size              optimal_buffer_copy_row_pitch_alignment               = {};
+        vx::device_size              non_coherent_atom_size                                = {};
+    };
+    struct physical_device_features : vx::enable_conversion<vx::physical_device_features, VkPhysicalDeviceFeatures2>
+    {
+        vx::structure_type_e structure_type                               = vx::structure_type_e::physical_device_features;
+        vx::next_t           next                                         = {};
+        vx::bool32_t         robust_buffer_access                         = {};
+        vx::bool32_t         full_draw_index_uint32                       = {};
+        vx::bool32_t         image_cube_array                             = {};
+        vx::bool32_t         independent_blend                            = {};
+        vx::bool32_t         geometry_shader                              = {};
+        vx::bool32_t         tessellation_shader                          = {};
+        vx::bool32_t         sample_rate_shading                          = {};
+        vx::bool32_t         dual_src_blend                               = {};
+        vx::bool32_t         logic_op                                     = {};
+        vx::bool32_t         multi_draw_indirect                          = {};
+        vx::bool32_t         draw_indirect_first_instance                 = {};
+        vx::bool32_t         depth_clamp                                  = {};
+        vx::bool32_t         depth_bias_clamp                             = {};
+        vx::bool32_t         fill_mode_non_solid                          = {};
+        vx::bool32_t         depth_bounds                                 = {};
+        vx::bool32_t         wide_lines                                   = {};
+        vx::bool32_t         large_points                                 = {};
+        vx::bool32_t         alpha_to_one                                 = {};
+        vx::bool32_t         multi_viewport                               = {};
+        vx::bool32_t         sampler_anisotropy                           = {};
+        vx::bool32_t         texture_compression_etc2                     = {};
+        vx::bool32_t         texture_compression_astc_ldr                 = {};
+        vx::bool32_t         texture_compression_bc                       = {};
+        vx::bool32_t         occlusion_query_precise                      = {};
+        vx::bool32_t         pipeline_statistics_query                    = {};
+        vx::bool32_t         vertex_pipeline_stores_and_atomics           = {};
+        vx::bool32_t         fragment_stores_and_atomics                  = {};
+        vx::bool32_t         shader_tessellation_and_geometry_point_size  = {};
+        vx::bool32_t         shader_image_gather_extended                 = {};
+        vx::bool32_t         shader_storage_image_extended_formats        = {};
+        vx::bool32_t         shader_storage_image_multisample             = {};
+        vx::bool32_t         shader_storage_image_read_without_format     = {};
+        vx::bool32_t         shader_storage_image_write_without_format    = {};
+        vx::bool32_t         shader_uniform_buffer_array_dynamic_indexing = {};
+        vx::bool32_t         shader_sampled_image_array_dynamic_indexing  = {};
+        vx::bool32_t         shader_storage_buffer_array_dynamic_indexing = {};
+        vx::bool32_t         shader_storage_image_array_dynamic_indexing  = {};
+        vx::bool32_t         shader_clip_distance                         = {};
+        vx::bool32_t         shader_cull_distance                         = {};
+        vx::bool32_t         shader_float64                               = {};
+        vx::bool32_t         shader_int64                                 = {};
+        vx::bool32_t         shader_int16                                 = {};
+        vx::bool32_t         shader_resource_residency                    = {};
+        vx::bool32_t         shader_resource_min_lod                      = {};
+        vx::bool32_t         sparse_binding                               = {};
+        vx::bool32_t         sparse_residency_buffer                      = {};
+        vx::bool32_t         sparse_residency_image2_d                    = {};
+        vx::bool32_t         sparse_residency_image3_d                    = {};
+        vx::bool32_t         sparse_residency2_samples                    = {};
+        vx::bool32_t         sparse_residency4_samples                    = {};
+        vx::bool32_t         sparse_residency8_samples                    = {};
+        vx::bool32_t         sparse_residency16_samples                   = {};
+        vx::bool32_t         sparse_residency_aliased                     = {};
+        vx::bool32_t         variable_multisample_rate                    = {};
+        vx::bool32_t         inherited_queries                            = {};
+    };
+    struct physical_device_sparse_properties : vx::enable_conversion<vx::physical_device_sparse_properties, VkPhysicalDeviceSparseProperties>
+    {
+        vx::bool32_t residency_standard_2d_block_shape             = {};
+        vx::bool32_t residency_standard_2d_multisample_block_shape = {};
+        vx::bool32_t residency_standard_3d_block_shape             = {};
+        vx::bool32_t residency_aligned_mip_size                    = {};
+        vx::bool32_t residency_non_resident_strict                 = {};
+    };
+    struct physical_device_properties : vx::enable_conversion<vx::physical_device_properties, VkPhysicalDeviceProperties2>
+    {
+        vx::structure_type_e                  structure_type                                = vx::structure_type_e::physical_device_properties;
+        vx::next_t                            next                                          = {};
+        vx::api_version_e                     api_version                                   = {};
+        vx::uint32_t                          driver_version                                = {};
+        vx::uint32_t                          vendor_id                                     = {};
+        vx::uint32_t                          device_id                                     = {};
+        vx::physical_device_type_e            device_type                                   = {};
+        vx::char_t                            device_name[VK_MAX_PHYSICAL_DEVICE_NAME_SIZE] = {};
+        vx::uint8_t                           pipeline_cache_uuid[VK_UUID_SIZE]             = {};
+        vx::physical_device_limits            limits                                        = {};
+        vx::physical_device_sparse_properties sparse_properties                             = {};
+    };
+    struct physical_device_memory_properties : vx::enable_conversion<vx::physical_device_memory_properties, VkPhysicalDeviceMemoryProperties2>
+    {
+        vx::structure_type_e structure_type                    = vx::structure_type_e::physical_device_memory_properties;
+        vx::next_t           next                              = {};
+        vx::uint32_t         memory_type_count                 = {};
+        vx::memory_type      memory_types[VK_MAX_MEMORY_TYPES] = {};
+        vx::uint32_t         memory_heap_count                 = {};
+        vx::memory_heap      memory_heaps[VK_MAX_MEMORY_HEAPS] = {};
+    };
+    struct surface_capabilities : vx::enable_conversion<vx::surface_capabilities, VkSurfaceCapabilitiesKHR>
+    {
+        vx::uint32_t                  min_image_count           = {};
+        vx::uint32_t                  max_image_count           = {};
+        vx::extent_2d                 current_extent            = {};
+        vx::extent_2d                 min_image_extent          = {};
+        vx::extent_2d                 max_image_extent          = {};
+        vx::uint32_t                  max_image_array_layers    = {};
+        vx::surface_transform_flags_e supported_transforms      = {};
+        vx::surface_transform_flags_e current_transform         = {};
+        vx::composite_alpha_flags_e   supported_composite_alpha = {};
+        vx::image_usage_flags_e       supported_usage_flags     = {};
+    };
+    struct surface_format : vx::enable_conversion<vx::surface_format, VkSurfaceFormat2KHR>
+    {
+        vx::structure_type_e structure_type = vx::structure_type_e::surface_format;
+        vx::next_t           next           = {};
+        vx::format_e         format         = {};
+        vx::color_space_e    color_space    = {};
+    };
+    struct physical_device_surface_info : vx::enable_conversion<vx::physical_device_surface_info, VkPhysicalDeviceSurfaceInfo2KHR>
+    {
+        vx::structure_type_e structure_type = vx::structure_type_e::physical_device_surface_info;
+        vx::next_t           next           = {};
+        vx::surface_t        surface        = {};
+    };
+    struct swap_chain_create_info : vx::enable_conversion<vx::swap_chain_create_info, VkSwapchainCreateInfoKHR>
+    {
+        vx::structure_type_e          structure_type       = vx::structure_type_e::swap_chain_create_info;
+        vx::next_t                    next                 = {};
+        vx::swap_chain_create_flags_e flags                = {};
+        vx::surface_t                 surface              = {};
+        vx::uint32_t                  minimum_image_count  = {};
+        vx::format_e                  image_format         = {};
+        vx::color_space_e             image_color_space    = {};
+        vx::extent_2d                 image_extent         = {};
+        vx::uint32_t                  image_array_layers   = {};
+        vx::image_usage_flags_e       image_usage          = {};
+        vx::sharing_mode_e            image_sharing_mode   = {};
+        vx::padded_span<vx::uint32_t> queue_family_indices = {};
+        vx::surface_transform_flags_e pre_transform        = {};
+        vx::composite_alpha_flags_e   composite_alpha      = {};
+        vx::presentation_mode_e       presentation_mode    = {};
+        vx::bool32_t                  clipped              = {};
+        vx::swap_chain_t              old_swap_chain       = {};
+    };
+    struct device_queue_create_info : vx::enable_conversion<device_queue_create_info, VkDeviceQueueCreateInfo>
+    {
+        vx::structure_type_e               structure_type     = vx::structure_type_e::device_queue_create_info;
+        vx::next_t                         next               = {};
+        vx::device_queue_create_flags_e    flags              = {};
+        vx::uint32_t                       queue_family_index = {};
+        vx::uint32_t                       queue_count        = {};
+        vx::pointer_t<const vx::float32_t> queue_priorities   = {};
+    };
+    struct physical_device_vulkan_1_3_features : vx::enable_conversion<vx::physical_device_vulkan_1_3_features, VkPhysicalDeviceVulkan13Features>
+    {
+        vx::structure_type_e structure_type                                            = vx::structure_type_e::physical_device_vulkan_1_3_features;
+        vx::next_t           next                                                      = {};
+        vx::bool32_t         robust_image_access                                       = {};
+        vx::bool32_t         inline_uniform_block                                      = {};
+        vx::bool32_t         descriptor_binding_inline_uniform_block_update_after_bind = {};
+        vx::bool32_t         pipeline_creation_cache_control                           = {};
+        vx::bool32_t         private_data                                              = {};
+        vx::bool32_t         shader_demote_to_helper_invocation                        = {};
+        vx::bool32_t         shader_terminate_invocation                               = {};
+        vx::bool32_t         subgroup_size_control                                     = {};
+        vx::bool32_t         compute_full_subgroups                                    = {};
+        vx::bool32_t         synchronization                                           = {};
+        vx::bool32_t         texture_compression_astc_hdr                              = {};
+        vx::bool32_t         shader_zero_initialize_workgroup_memory                   = {};
+        vx::bool32_t         dynamic_rendering                                         = {};
+        vx::bool32_t         shader_integer_dot_product                                = {};
+        vx::bool32_t         maintenance                                               = {};
+    };
+    struct physical_device_extended_dynamic_state_features : vx::enable_conversion<vx::physical_device_extended_dynamic_state_features, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>
+    {
+        vx::structure_type_e structure_type         = vx::structure_type_e::physical_device_extended_dynamic_state_features;
+        vx::next_t           next                   = {};
+        vx::bool32_t         extended_dynamic_state = {};
+    };
+}

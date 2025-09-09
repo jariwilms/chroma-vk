@@ -19,13 +19,17 @@ export namespace vx
     public:
         using native_t = VkSurfaceKHR;
 
-        surface(std::shared_ptr<vx::instance> instance)
+        surface(vx::instance instance)
         {
-            const auto result = std::bit_cast<vx::result_e>(glfwCreateWindowSurface(instance->operator VkInstance_T*(), window, nullptr, &surface_));
+            const auto result = std::bit_cast<vx::result_e>(glfwCreateWindowSurface(instance, window, nullptr, &surface_));
             if (result != vx::result_e::success) throw std::runtime_error{ "Failed to create surface!" };
         }
 
-        operator const VkSurfaceKHR() const
+        operator       VkSurfaceKHR&()
+        {
+            return surface_;
+        }
+        operator const VkSurfaceKHR&() const
         {
             return surface_;
         }
