@@ -2,6 +2,7 @@ export module vx.structures;
 
 import std;
 import <vulkan/vulkan.h>;
+import <vulkan/vulkan.hpp>;
 import vx.types;
 import vx.flags;
 
@@ -11,7 +12,78 @@ export namespace vx
     constexpr auto maximum_description_size    = vx::uint32_t{ VK_MAX_DESCRIPTION_SIZE    };
 
 
+    template<typename T>
+    class alias_of
+    {
+    public:
+        using native_t = T;
 
+        alias_of()
+            : value_{} {}
+        alias_of(T value)
+            : value_{ value } {}
+
+        operator       native_t&()
+        {
+            return value_;
+        }
+        operator const native_t&() const
+        {
+            return value_;
+        }
+
+    private:
+        native_t value_;
+    };
+
+    using image         = vx::alias_of<vx::image_t        >;
+    using image_view    = vx::alias_of<vx::image_view_t   >;
+    using shader_module = vx::alias_of<vx::shader_module_t>;
+
+
+    
+    struct structure_t
+    {
+        structure_t(const vx::structure_type_e structure_type)
+            : structure_type_{ structure_type } {}
+
+    private:
+        const vx::structure_type_e structure_type_;
+    };
+
+
+
+
+
+    struct application_info : vx::enable_conversion<vx::application_info, VkApplicationInfo>
+    {
+        vx::structure_type_e structure_type = vx::structure_type_e::application_info;
+        vx::next_t           next           = {};
+        vx::string_view      name           = {};
+        vx::uint32_t         version        = {};
+        vx::string_view      engine_name    = {};
+        vx::uint32_t         engine_version = {};
+        vx::api_version_e    api_version    = {};
+    };
+    struct debug_messenger_create_info : vx::enable_conversion<vx::debug_messenger_create_info, VkDebugUtilsMessengerCreateInfoEXT>
+    {
+        vx::structure_type_e                     structure_type = vx::structure_type_e::debug_messenger;
+        vx::next_t                               next           = {};
+        vx::debug_utils_messenger_create_flags_e flags          = {};
+        vx::debug_utils_message_severity_e       severity       = {};
+        vx::debug_utils_message_type_e           type           = {};
+        vx::debug_utils_messenger_callback_t     callback       = {};
+        vx::next_t                               user_data      = {};
+    };
+    struct instance_create_info : vx::enable_conversion<vx::instance_create_info, VkInstanceCreateInfo>
+    {
+        vx::structure_type_e                        structure_type   = vx::structure_type_e::instance_create_info;
+        vx::next_t                                  next             = {};
+        vx::instance_create_flags_e                 flags            = {};
+        vx::reference_t<const vx::application_info> application_info = {};
+        vx::span<const vx::string_view>             layer_names      = {};
+        vx::span<const vx::string_view>             extension_names  = {};
+    };
     struct layer_properties : vx::enable_conversion<vx::layer_properties, VkLayerProperties>
     {
         vx::array<vx::char_t, vx::maximum_extension_name_size> name;
@@ -334,5 +406,165 @@ export namespace vx
         vx::structure_type_e structure_type         = vx::structure_type_e::physical_device_extended_dynamic_state_features;
         vx::next_t           next                   = {};
         vx::bool32_t         extended_dynamic_state = {};
+    };
+    struct component_mapping : vx::enable_conversion<vx::component_mapping, VkComponentMapping>
+    {
+        vx::component_swizzle_e r = {};
+        vx::component_swizzle_e g = {};
+        vx::component_swizzle_e b = {};
+        vx::component_swizzle_e a = {};
+    };
+    struct image_sub_resource_range : vx::enable_conversion<vx::image_sub_resource_range, VkImageSubresourceRange>
+    {
+        vx::image_aspect_flags_e  aspect_flags     = {};
+        vx::uint32_t              base_mip_level   = {};
+        vx::uint32_t              level_count      = {};
+        vx::uint32_t              base_array_layer = {};
+        vx::uint32_t              layer_count      = {};
+    };
+    struct image_view_create_info : vx::enable_conversion<vx::image_view_create_info, VkImageViewCreateInfo>
+    {
+        vx::structure_type_e          structure_type     = vx::structure_type_e::image_view_create_info;
+        vx::next_t                    next               = {};
+        vx::image_view_create_flags_e flags              = {};
+        vx::image                     image              = {};
+        vx::image_view_type_e         view_type          = {};
+        vx::format_e                  format             = {};
+        vx::component_mapping         component_mapping  = {};
+        vx::image_sub_resource_range  sub_resource_range = {};
+    };
+    struct viewport : vx::enable_conversion<vx::viewport, VkViewport>
+    {
+        vx::float32_t x             = {}; //TODO: vector2 (or vector4?)
+        vx::float32_t y             = {};
+        vx::float32_t width         = {};
+        vx::float32_t height        = {};
+        vx::float32_t minimum_depth = {};
+        vx::float32_t maximum_depth = {};
+
+    };
+    struct offset_2d : vx::enable_conversion<vx::offset_2d, VkOffset2D>
+    {
+        vx::int32_t x = {}; //TODO: vec2i
+        vx::int32_t y = {};
+    };
+    struct rectangle_2d : vx::enable_conversion<vx::rectangle_2d, VkRect2D>
+    {
+        vx::offset_2d offset = {};
+        vx::extent_2d extent = {};
+    };
+    struct shader_module_create_info : vx::enable_conversion<vx::shader_module_create_info, VkShaderModuleCreateInfo>
+    {
+        vx::structure_t                   type           = vx::structure_type_e::shader_module_create_info;
+        vx::next_t                        next           = {};
+        vx::shader_module_create_flags_e  flags          = {};
+        vx::size_t                        code_size      = {}; //TODO: span (64-bit size type required)
+        vx::pointer_t<const vx::uint32_t> code           = {};
+    };
+    struct specialization_map_entry : vx::enable_conversion<vx::specialization_map_entry, VkSpecializationMapEntry>
+    {
+        vx::uint32_t constant_id = {};
+        vx::uint32_t offset      = {};
+        vx::size_t   size        = {};
+    };
+    struct specialization_info : vx::enable_conversion<vx::specialization_info, VkSpecializationInfo>
+    {
+        vx::uint32_t                                  entry_count = {}; //span
+        vx::pointer_t<const specialization_map_entry> map_entries = {};
+        vx::size_t                                    data_size   = {}; //span (64-bit size)
+        vx::pointer_t<const vx::void_t>               data        = {};
+    };
+    struct pipeline_shader_stage_create_info : vx::enable_conversion<vx::pipeline_shader_stage_create_info, VkPipelineShaderStageCreateInfo>
+    {
+        vx::structure_type_e                         structure           = vx::structure_type_e::pipeline_shader_stage_create_info;
+        vx::next_t                                   next                = {};
+        vx::pipeline_shader_stage_create_flags_e     flags               = {};
+        vx::shader_stage_flags_e                     stage               = {};
+        vx::shader_module                            module              = {};
+        vx::string_view                              name                = {};
+        vx::pointer_t<const vx::specialization_info> specialization_info = {};
+    };
+    struct pipeline_input_assembly_state_create_info : vx::enable_conversion<vx::pipeline_input_assembly_state_create_info, VkPipelineInputAssemblyStateCreateInfo>
+    {
+        vx::structure_type_e                             structure_type           = {};
+        vx::next_t                                       next                     = {};
+        vx::pipeline_input_assembly_state_create_flags_e flags                    = {};
+        vx::primitive_topology_e                         topology                 = {};
+        vx::bool32_t                                     primitive_restart_enable = {};
+    };
+    struct vertex_input_binding_description : vx::enable_conversion<vx::vertex_input_binding_description, VkVertexInputBindingDescription>
+    {
+        vx::uint32_t            binding    = {};
+        vx::uint32_t            stride     = {};
+        vx::vertex_input_rate_e input_rate = {};
+    };
+    struct vertex_input_attribute_description : vx::enable_conversion<vx::vertex_input_attribute_description, VkVertexInputAttributeDescription>
+    {
+        vx::uint32_t location = {};
+        vx::uint32_t binding  = {};
+        vx::format_e format   = {};
+        vx::uint32_t offset   = {};
+    };
+    struct pipeline_vertex_input_state_create_info : vx::enable_conversion<vx::pipeline_vertex_input_state_create_info, VkPipelineVertexInputStateCreateInfo>
+    {
+        vx::structure_t                                                structure_type                = vx::structure_type_e::pipeline_vertex_input_state_create_info;
+        vx::next_t                                                     next                          = {};
+        vx::pipeline_vertex_input_state_create_flags_e                 flags                         = {};
+        vx::aligned_span<const vx::vertex_input_binding_description>   vertex_binding_descriptions   = {};
+        vx::padded_span <const vx::vertex_input_attribute_description> vertex_attribute_descriptions = {};
+    };
+    struct pipeline_viewport_state_create_info : vx::enable_conversion<vx::pipeline_viewport_state_create_info, VkPipelineViewportStateCreateInfo>
+    {
+        vx::structure_t                            structure_type = vx::structure_type_e::pipeline_viewport_state_create_info;
+        vx::next_t                                 next           = {};
+        vx::pipeline_viewport_state_create_flags_e flags          = {};
+        vx::aligned_span<const vx::viewport    >   viewports      = {};
+        vx::padded_span <const vx::rectangle_2d>   scissors       = {};
+    };
+    struct pipeline_rasterization_state_create_info : vx::enable_conversion<vx::pipeline_rasterization_state_create_info, VkPipelineRasterizationStateCreateInfo>
+    {
+        vx::structure_t                                 structure_type               = vx::structure_type_e::pipeline_rasterization_state_create_info;
+        vx::next_t                                      next                         = {};
+        vx::pipeline_rasterization_state_create_flags_e flags                        = {};
+        vx::bool32_t                                    enable_depth_clamp           = {};
+        vx::bool32_t                                    enable_rasterization_discard = {};
+        vx::polygon_mode_e                              polygon_mode                 = {};
+        vx::culling_mode_e                              culling_mode                 = {};
+        vx::front_face_e                                front_face                   = {};
+        vx::bool32_t                                    enable_depth_bias            = {};
+        vx::float32_t                                   depth_bias_constant_factor   = {};
+        vx::float32_t                                   depth_bias_clamp             = {};
+        vx::float32_t                                   depth_bias_slope_factor      = {};
+        vx::float32_t                                   line_width                   = {};
+    };
+    struct pipeline_multisample_state_create_info : vx::enable_conversion<vx::pipeline_multisample_state_create_info, VkPipelineMultisampleStateCreateInfo>
+    {
+        vx::structure_t                               structure_type           = vx::structure_type_e::pipeline_multisample_state_create_info;
+        vx::next_t                                    next                     = {};
+        vx::pipeline_multisample_state_create_flags_e flags                    = {};
+        vx::sample_count_e                            rasterization_samples    = {};
+        vx::bool32_t                                  enable_sample_shading    = {};
+        vx::float32_t                                 minimum_sample_shading   = {};
+        vx::pointer_t<const vx::sample_mask>          sample_mask              = {}; //TODO: ...? check docs or smth
+        vx::bool32_t                                  enable_alpha_to_coverage = {};
+        vx::bool32_t                                  enable_alpha_to_one      = {};
+    };
+    struct pipeline_color_blend_attachment_state : vx::enable_conversion<vx::pipeline_color_blend_attachment_state, VkPipelineColorBlendAttachmentState>
+    {
+        vx::bool32_t             enable_blending                = {};
+        vx::blending_factor_e    source_color_blend_factor      = {};
+        vx::blending_factor_e    destination_color_blend_factor = {};
+        vx::blending_operation_e color_blending_operation       = {};
+        vx::blending_factor_e    source_alpha_blend_factor      = {};
+        vx::blending_factor_e    destination_alpha_blend_factor = {};
+        vx::blending_operation_e alpha_blend_operation          = {};
+        vx::color_component_e    color_write_mask               = {};
+    };
+    struct command_pool_create_info : vx::enable_conversion<vx::command_pool_create_info, VkCommandPoolCreateInfo>
+    {
+        vx::structure_t                 structure_type     = vx::structure_type_e::command_pool_create_info;
+        vx::next_t                      next               = {};
+        vx::command_pool_create_flags_e flags              = {};
+        vx::uint32_t                    queue_family_index = {};
     };
 }

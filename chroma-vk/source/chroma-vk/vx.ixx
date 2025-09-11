@@ -52,11 +52,20 @@ export namespace vx
 
 
     template<typename T>
-    auto ternary(vx::bool_t result, T true_result, T false_result) -> T
+              auto ternary(vx::bool_t result, T true_result, T false_result) -> T
     {
         if   (result) return true_result ;
         else          return false_result;
     }
+    template<vx::bool32_t R, typename T>
+    constexpr auto ternary(T true_result, T false_result) -> T
+    {
+        if   constexpr (R) return true_result ;
+        else               return false_result;
+    }
+    
+    
+    
     auto to_c_strings(std::span<const std::string> span) -> std::vector<const vx::char_t*>
     {
         return span
@@ -119,6 +128,8 @@ export namespace vx
             return data;
         }
     }
+
+
 
     auto enumerate_instance_layer_properties() -> std::vector<vx::layer_properties>
     {

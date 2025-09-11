@@ -203,13 +203,18 @@ export namespace vx
                 vx::physical_device_extended_dynamic_state_features{ .extended_dynamic_state = vx::true_,                                }, 
             };
             const auto logical_device_create_info              = vx::logical_device_create_info{
-                .queue_create_info       = vx::span                       { &logical_device_queue_create_info, 1u                                 }, 
-                .enabled_extension_names = vx::span<const vx::string_view>{ std::from_range                  , required_logical_device_extensions }, 
+                .queue_create_info       = vx::span{ &logical_device_queue_create_info , 1u }, 
+                .enabled_extension_names = vx::span{ required_logical_device_extensions     }, 
                 .enabled_features        = &structure_chain.get<vx::physical_device_features>(), 
             };
 
             vx::create_logical_device      (physical_device, *this, logical_device_create_info);
             vx::create_logical_device_queue(*this, queue_index_);
+        }
+
+        auto queue_index() const -> vx::uint32_t
+        {
+            return queue_index_;
         }
 
         operator       vx::logical_device_t&()

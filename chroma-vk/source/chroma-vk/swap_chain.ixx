@@ -6,7 +6,7 @@ export module vx.swap_chain;
 
 import std;
 import <vulkan/vulkan.h>;
-import <vulkan/vulkan.hpp>;
+import <vulkan/vulkan_raii.hpp>;
 import vx;
 import vx.instance;
 import vx.surface;
@@ -33,28 +33,16 @@ export namespace vx
     template<std::convertible_to<vx::physical_device_t> T, std::convertible_to<vx::surface_t> U>
     auto get_physical_device_surface_presentation_modes(T physical_device, U surface) -> std::vector<vx::presentation_mode_e>
     {
-        return {};
-        __debugbreak();
-        //return vx::query_and_retrieve<::vkGetPhysicalDeviceSurfacePresentModesKHR, vx::presentation_mode_e>(physical_device, surface);
+              auto count        = vx::uint32_t{};
+        const auto count_result = std::bit_cast<vx::result_e>(::vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &count, nullptr));
+        if (count_result != vx::result_e::success) throw std::runtime_error{ "" };
+
+              auto data         = std::vector<vx::presentation_mode_e>(count);
+        const auto data_result  = std::bit_cast<vx::result_e>(::vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &count, std::bit_cast<VkPresentModeKHR*>(data.data())));
+        if (data_result != vx::result_e::success) throw std::runtime_error{ "" };
+        
+        return data;
     }
-
-    class image
-    {
-    public:
-        using native_t = vx::image_t;
-
-        operator       vx::image_t&()
-        {
-            return image_;
-        }
-        operator const vx::image_t&() const
-        {
-            return image_;
-        }
-
-    private:
-        vx::image_t image_;
-    };
 
     template<std::convertible_to<vx::logical_device_t> T>
     auto create_swap_chain(T logical_device, const vx::swap_chain_create_info& swap_chain_create_info) -> vx::swap_chain_t
@@ -70,8 +58,16 @@ export namespace vx
     {
         return vx::query_and_retrieve<::vkGetSwapchainImagesKHR, T>(logical_device, swap_chain);
     }
-    
 
+    template<std::convertible_to<vx::logical_device_t> T>
+    auto create_image_view(T logical_device, const vx::image_view_create_info& image_view_create_info) -> vx::image_view_t
+    {
+        auto vk_image_view = vx::image_view_t{};
+        const auto result = std::bit_cast<vx::result_e>(::vkCreateImageView(logical_device, image_view_create_info, nullptr, &vk_image_view));
+        if (result != vx::result_e::success) throw std::runtime_error{ "" };
+
+        return vk_image_view;
+    }
 
 
 
@@ -80,9 +76,9 @@ export namespace vx
     public:
         swap_chain(vx::physical_device physical_device, vx::logical_device logical_device, vx::surface surface)
         {
-            const auto surface_capabilities   = vx::get_physical_device_surface_capabilities      (physical_device, surface);
-            const auto surface_formats        = vx::get_physical_device_surface_formats           (physical_device, surface);
-            const auto presentation_modes     = vx::get_physical_device_surface_presentation_modes(physical_device, surface);
+            const auto surface_capabilities     = vx::get_physical_device_surface_capabilities      (physical_device, surface);
+            const auto surface_formats          = vx::get_physical_device_surface_formats           (physical_device, surface);
+            const auto presentation_modes       = vx::get_physical_device_surface_presentation_modes(physical_device, surface);
 
             image_format_ = std::invoke([&]() -> vx::format_e
                 {
@@ -92,6 +88,7 @@ export namespace vx
                         });
                         
                     return iterator != surface_formats.end() ? iterator->format : surface_formats.at(0u).format;
+                    return {};
                 });
             extent_       = std::invoke([&]() -> vx::extent_2d
                 {
@@ -99,7 +96,7 @@ export namespace vx
     
                     auto width  = vx::int32_t{};
                     auto height = vx::int32_t{};
-                    //::glfwGetFramebufferSize(window_, &width, &height);
+                    //::glfwGetFramebufferSize(window_, &width, &height); //TODO
     
                     return vx::extent_2d
                     {
@@ -108,15 +105,15 @@ export namespace vx
                     };
                 });
     
-            const auto maximum_image_count    = std::max   (3u, surface_capabilities.min_image_count);
-            const auto minimum_image_count    = vx::ternary(surface_capabilities.max_image_count, std::min(maximum_image_count, surface_capabilities.max_image_count), maximum_image_count);
-            const auto supports_mailbox       = std::ranges::any_of(presentation_modes, [](const vx::presentation_mode_e presentation_mode)
+            const auto maximum_image_count      = std::max   (3u, surface_capabilities.min_image_count);
+            const auto minimum_image_count      = vx::ternary(surface_capabilities.max_image_count, std::min(maximum_image_count, surface_capabilities.max_image_count), maximum_image_count);
+            const auto supports_mailbox         = std::ranges::any_of(presentation_modes, [](const vx::presentation_mode_e presentation_mode)
                 {
                     return presentation_mode == vx::presentation_mode_e::mailbox;
                 });
-            const auto presentation_mode      = vx::ternary(supports_mailbox, vx::presentation_mode_e::mailbox, vx::presentation_mode_e::fifo);
+            const auto presentation_mode        = vx::ternary(supports_mailbox, vx::presentation_mode_e::mailbox, vx::presentation_mode_e::fifo);
 
-            const auto swap_chain_create_info = vx::swap_chain_create_info
+            const auto swap_chain_create_info   = vx::swap_chain_create_info
             {
                 .surface             = surface                                  , 
                 .minimum_image_count = minimum_image_count                      , 
@@ -132,8 +129,43 @@ export namespace vx
                 .clipped             = vx::true_                                , 
             };
     
-            swap_chain_ = vx::create_swap_chain               (logical_device, swap_chain_create_info);
-            images_     = vx::get_swap_chain_images<vx::image>(logical_device, *this                 );
+            swap_chain_                         = vx::create_swap_chain               (logical_device, swap_chain_create_info);
+            images_                             = vx::get_swap_chain_images<vx::image>(logical_device, *this                 );
+
+            const auto image_sub_resource_range = vx::image_sub_resource_range
+            {
+                .aspect_flags     = vx::image_aspect_flags_e::color, 
+                .base_mip_level   = vx::uint32_t{ 0u }             , 
+                .level_count      = vx::uint32_t{ 1u }             , 
+                .base_array_layer = vx::uint32_t{ 0u }             , 
+                .layer_count      = vx::uint32_t{ 1u }             , 
+            };
+            const auto image_view_create_info   = vx::image_view_create_info
+            {
+                .view_type          = vx::image_view_type_e::_2d, 
+                .format             = image_format_             , 
+                .sub_resource_range = image_sub_resource_range  , 
+            };
+            std::ranges::for_each(images_, [&](const vx::image image)
+                {
+                    auto current_image_view_create_info  = image_view_create_info;
+                    current_image_view_create_info.image = image;
+
+                    image_views_.emplace_back(vx::create_image_view(logical_device, current_image_view_create_info));
+                });
+        }
+
+        auto image_format() const -> vx::format_e
+        {
+            return image_format_;
+        }
+        auto extent      () const -> vx::extent_2d
+        {
+            return extent_;
+        }
+        auto images      () const -> const std::vector<vx::image>&
+        {
+            return images_;
         }
 
         operator       vx::swap_chain_t&()
@@ -146,9 +178,10 @@ export namespace vx
         }
 
     private:
-        vx::swap_chain_t       swap_chain_;
-        vx::format_e           image_format_;
-        vx::extent_2d          extent_;
-        std::vector<vx::image> images_;
+        vx::swap_chain_t              swap_chain_;
+        vx::format_e                  image_format_;
+        vx::extent_2d                 extent_;
+        std::vector<vx::image>        images_;
+        std::vector<vx::image_view_t> image_views_;
     };
 }

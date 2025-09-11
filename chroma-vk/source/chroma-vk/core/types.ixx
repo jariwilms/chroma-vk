@@ -53,6 +53,10 @@ export namespace vx
     using shader_module_t         = VkShaderModule;
     using surface_t               = VkSurfaceKHR;
     using swap_chain_t            = VkSwapchainKHR;
+    using debug_messenger_t       = VkDebugUtilsMessengerEXT;
+    using shader_module_t         = VkShaderModule;
+    
+
 
     using debug_utils_messenger_callback_t = PFN_vkDebugUtilsMessengerCallbackEXT;
 
@@ -70,17 +74,12 @@ export namespace vx
 
 
 
-
-
     template<typename T, typename U>
-    struct enable_conversion
+    struct enable_conversion 
     {
         using native_t = U;
 
-        enable_conversion()
-        {
-            static_assert(sizeof(std::remove_cvref_t<std::remove_pointer_t<T>>) == sizeof(std::remove_cvref_t<std::remove_pointer_t<U>>));
-        }
+        enable_conversion() { static_assert(sizeof(T) == sizeof(U)); }
 
         operator vx::pointer_t<      U>()
         {
@@ -91,7 +90,6 @@ export namespace vx
             return std::bit_cast<vx::pointer_t<const U>>(this);
         }
     };
-
 
 
 
@@ -107,7 +105,7 @@ export namespace vx
         span(vx::pointer_t<T> pointer, vx::uint64_t size)
             : size_{ static_cast<vx::uint32_t>(size) }, pointer_{ pointer } {}
         template<std::ranges::contiguous_range R>
-        span(std::from_range_t, R&& range)
+        span(R&& range)
             : size_{ static_cast<vx::uint32_t>(std::ranges::size(range)) }, pointer_{ std::ranges::data(range) } {}
 
         auto size() const -> vx::uint32_t
@@ -123,6 +121,11 @@ export namespace vx
         vx::uint32_t size_;
         T*           pointer_;
     };
+
+    template <std::ranges::contiguous_range R>
+    vx::span(R&&) -> vx::span<std::remove_reference_t<std::ranges::range_reference_t<R>>>;
+
+
     template<typename T>
     struct padded_span
     {
