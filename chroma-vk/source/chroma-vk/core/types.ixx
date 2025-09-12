@@ -26,6 +26,7 @@ export namespace vx
     using byte_t    = vx::uint8_t;
     using size_t    = vx::uint64_t;
 
+    using result_t                = VkResult;
     using buffer_t                = VkBuffer;
     using buffer_view_t           = VkBufferView;
     using command_buffer_t        = VkCommandBuffer;
@@ -59,6 +60,9 @@ export namespace vx
 
 
     using debug_utils_messenger_callback_t = PFN_vkDebugUtilsMessengerCallbackEXT;
+    using create_debug_messenger_f         = PFN_vkCreateDebugUtilsMessengerEXT;
+
+
 
     enum : vx::bool_t
     {

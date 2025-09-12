@@ -162,6 +162,7 @@ export namespace vx
         pipeline_depth_stencil_state_create_info        = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO           , 
         graphics_pipeline_create_info                   = VkStructureType::VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO                      , 
         command_pool_create_info                        = VkStructureType::VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO                           , 
+        pipeline_input_assembly_state_create_info       = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO          , 
     };
     enum class device_queue_create_flags_e : std::underlying_type_t<VkDeviceQueueCreateFlagBits>
     {

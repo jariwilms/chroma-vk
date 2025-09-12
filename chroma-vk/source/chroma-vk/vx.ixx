@@ -1,7 +1,9 @@
 export module vx;
+export import vx.extensions;
 export import vx.flags;
-export import vx.types;
+export import vx.functions;
 export import vx.structures;
+export import vx.types;
 
 import std;
 import glm;
@@ -52,20 +54,18 @@ export namespace vx
 
 
     template<typename T>
-              auto ternary(vx::bool_t result, T true_result, T false_result) -> T
+    auto ternary(vx::bool_t result, T true_result, T false_result) -> T
     {
         if   (result) return true_result ;
         else          return false_result;
     }
     template<vx::bool32_t R, typename T>
-    constexpr auto ternary(T true_result, T false_result) -> T
+    auto ternary(T true_result, T false_result) -> T
     {
         if   constexpr (R) return true_result ;
         else               return false_result;
     }
-    
-    
-    
+     
     auto to_c_strings(std::span<const std::string> span) -> std::vector<const vx::char_t*>
     {
         return span
@@ -73,8 +73,6 @@ export namespace vx
             | std::ranges::to<std::vector>();
     }
     
-    
-
     auto get_required_layers_or_smth    () -> std::vector<vx::string_view>
     {
         auto layers = std::vector<vx::string_view>{};
@@ -91,52 +89,10 @@ export namespace vx
 
         return extensions;
     }
-
-    
-
     auto debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT vk_message_severity, VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* vk_callback_data, void*) -> vx::uint32_t
     {
         if (vk_message_severity > VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) std::println("{}", vk_callback_data->pMessage);
 
         return vx::false_;
-    }
-
-
-
-    template<auto Fn, typename T, typename... Args>
-    auto query_and_retrieve(Args&&... args) -> std::vector<T>
-    {
-        if constexpr (std::is_same_v<std::invoke_result_t<decltype(Fn), Args..., vx::uint32_t*, typename T::native_t*>, VkResult>)
-        {
-            auto count        = vx::uint32_t {};
-            auto count_result = std::bit_cast<vx::result_e>(Fn(args..., &count, nullptr));
-            if (count_result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data count!" };
-
-            auto data         = std::vector<T>(count);
-            auto data_result  = std::bit_cast<vx::result_e>(Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data())));
-            if (data_result != vx::result_e::success) throw std::runtime_error{ "Failed to retrieve data!" };
-
-            return data;
-        }
-        else
-        {
-            auto count = vx::uint32_t{};
-            Fn(args..., &count, nullptr);
-            auto data  = std::vector<T>(count);
-            Fn(args..., &count, std::bit_cast<typename T::native_t*>(data.data()));
-
-            return data;
-        }
-    }
-
-
-
-    auto enumerate_instance_layer_properties() -> std::vector<vx::layer_properties>
-    {
-        return vx::query_and_retrieve<vkEnumerateInstanceLayerProperties, vx::layer_properties>();
-    }
-    auto enumerate_instance_extension_properties(vx::string_view layer_name = {}) -> std::vector<vx::extension_properties>
-    {
-        return vx::query_and_retrieve<vkEnumerateInstanceExtensionProperties, vx::extension_properties>(layer_name);
     }
 }

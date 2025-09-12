@@ -7,7 +7,6 @@ export module vx.surface;
 
 import std;
 import vx;
-import vx.types;
 import vx.instance;
 
 export namespace vx
@@ -17,24 +16,21 @@ export namespace vx
     class surface
     {
     public:
-        using native_t = VkSurfaceKHR;
-
         surface(vx::instance instance)
         {
-            const auto result = std::bit_cast<vx::result_e>(glfwCreateWindowSurface(instance, window, nullptr, &surface_));
-            if (result != vx::result_e::success) throw std::runtime_error{ "Failed to create surface!" };
+            vx::handle_result(::glfwCreateWindowSurface(instance, window, nullptr, &surface_));
         }
 
-        operator       VkSurfaceKHR&()
+        operator       vx::surface_t&()
         {
             return surface_;
         }
-        operator const VkSurfaceKHR&() const
+        operator const vx::surface_t&() const
         {
             return surface_;
         }
 
     private:
-        VkSurfaceKHR surface_;
+        vx::surface_t surface_;
     };
 }
